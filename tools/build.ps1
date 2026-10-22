@@ -18,7 +18,48 @@ $proj = Split-Path -Parent $PSScriptRoot
 $buildDir = Join-Path $proj 'build'
 New-Item -ItemType Directory -Force $buildDir | Out-Null
 
+function Write-GodotCredentials {
+    # Godot 4.7 only reads credentials from res://.godot/export_credentials.cfg,
+    # in [preset.N.options] form. Our gitignored export_credentials.cfg is the
+    # human-managed source; translate it on every release build.
+    $src = Join-Path $proj 'export_credentials.cfg'
+    if (-not (Test-Path $src)) {
+        throw "release build needs $src (keystore path, alias, password)"
+    }
+
+    $values = @{}
+    foreach ($line in Get-Content $src) {
+        if ($line -match '^\s*([A-Za-z0-9_]+)\s*=\s*"(.*)"\s*$') {
+            $values[$matches[1]] = $matches[2]
+        }
+    }
+    foreach ($key in 'keystore', 'keystore_user', 'keystore_password') {
+        if (-not $values.ContainsKey($key) -or [string]::IsNullOrWhiteSpace($values[$key])) {
+            throw "export_credentials.cfg is missing $key"
+        }
+    }
+    if (-not (Test-Path $values['keystore'])) {
+        throw "keystore not found at $($values['keystore'])"
+    }
+
+    $content = @"
+[preset.0.options]
+
+keystore/release="$($values['keystore'])"
+keystore/release_user="$($values['keystore_user'])"
+keystore/release_password="$($values['keystore_password'])"
+
+"@
+    $godotDir = Join-Path $proj '.godot'
+    New-Item -ItemType Directory -Force $godotDir | Out-Null
+    $target = Join-Path $godotDir 'export_credentials.cfg'
+    # ConfigFile is happy with plain UTF-8; a BOM is not worth the risk
+    [System.IO.File]::WriteAllText($target, $content, (New-Object System.Text.UTF8Encoding($false)))
+    Write-Host "credentials -> $target"
+}
+
 if ($Release) {
+    Write-GodotCredentials
     $out = Join-Path $buildDir 'shardwave-release.apk'
     Write-Host "exporting release -> $out"
     & $godot --headless --path $proj --export-release 'Android' $out

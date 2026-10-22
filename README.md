@@ -51,12 +51,26 @@ Dev screenshot helpers: `tests/Shot.gd`, `tests/FxShot.gd`, `tests/ShotScene.tsc
 ## Signing
 
 The release keystore lives **outside** this repo at
-`C:\Keys\shardwave-release.jks` (alias `shardwave`), with the password in
-`C:\Keys\shardwave-signing.txt` and `export_credentials.cfg` (gitignored).
-Both are backed up separately. Losing them means never updating the app on Play.
+`C:\Keys\shardwave-release.jks` (alias `shardwave`); the password is in
+`C:\Keys\shardwave-signing.txt`. Back both up off this machine — losing them
+means never updating the app on Play.
 
-Widgets: `icons/` holds the Android launcher/adaptive icons, regenerated with
-`.\tools\icons.ps1`.
+`export_credentials.cfg` in the project root holds the same values for local
+builds and is gitignored. `build.ps1 -Release` translates it into
+`.godot/export_credentials.cfg`, which is the only file Godot 4.7 reads
+signing credentials from.
+
+Android treats debug and release APKs as different signers, so switching
+between them needs `adb uninstall com.at8studios.shardwave` first.
+
+## Icons
+
+`icons/` holds the launcher icon, adaptive foreground and adaptive background.
+They are drawn from the same geometry as `icon.svg` and can be regenerated with:
+
+```powershell
+.\tools\icons.ps1
+```
 
 ## Controls
 
