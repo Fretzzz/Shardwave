@@ -34,5 +34,6 @@ Write-Host "ok: $([math]::Round((Get-Item $out).Length / 1MB, 1)) MB"
 if ($Install) {
     & $adb install -r $out
     if ($LASTEXITCODE -ne 0) { throw "adb install failed ($LASTEXITCODE)" }
-    & $adb shell am start -n 'com.at8studios.shardwave/com.godot.game.GodotApp'
+    # GodotApp is not exported; the launcher alias is the one Android can start.
+    & $adb shell monkey -p 'com.at8studios.shardwave' -c android.intent.category.LAUNCHER 1 | Out-Null
 }
