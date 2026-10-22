@@ -33,7 +33,11 @@ The Android preset also requires `import_etc2_astc=true` in `project.godot`
 .\tools\build.ps1              # debug APK -> build\shardwave-debug.apk
 .\tools\build.ps1 -Install     # build, adb install -r, launch
 .\tools\build.ps1 -Release     # release APK (needs export_credentials.cfg)
+.\tools\version.ps1 -Version 0.2.0   # bump APK version name, code +1
 ```
+
+The version tool updates `project.godot` and `export_presets.cfg` together,
+so the title screen and the store never disagree.
 
 `tests/`, `tools/` and `build/` are stripped from the exported APK by
 `exclude_filter` in `export_presets.cfg`.
