@@ -1,0 +1,15 @@
+# Godot
+.godot/
+build/
+android/
+*.translation
+
+# Secrets — never commit signing material
+*.keystore
+*.jks
+export_credentials.cfg
+
+# OS
+Thumbs.db
+desktop.ini
+.DS_Store

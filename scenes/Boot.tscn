@@ -1,0 +1,39 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scenes/Boot.gd" id="1_boot"]
+
+[node name="Boot" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_boot")
+
+[node name="Center" type="CenterContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+offset_top = 90.0
+
+[node name="VBox" type="VBoxContainer" parent="Center"]
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="Title" type="Label" parent="Center/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.957, 0.941, 1, 1)
+theme_override_font_sizes/font_size = 76
+text = "SHARDWAVE"
+horizontal_alignment = 1
+
+[node name="Status" type="Label" parent="Center/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.639, 0.58, 0.863, 1)
+theme_override_font_sizes/font_size = 22
+text = "booting"
+horizontal_alignment = 1

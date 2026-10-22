@@ -1,0 +1,36 @@
+; Shardwave — AT8 Studios
+; Engine configuration. Hand-authored; edit settings in the Godot editor where possible.
+
+config_version=5
+
+[application]
+
+config/name="Shardwave"
+config/description="Every clear shatters."
+config/version="0.1.0"
+run/main_scene="res://scenes/Game.tscn"
+config/features=PackedStringArray("4.7", "GL Compatibility")
+boot_splash/bg_color=Color(0.0705882, 0.0392157, 0.164706, 1)
+boot_splash/show_image=false
+
+[autoload]
+
+Haptics="*res://meta/Haptics.gd"
+
+[display]
+
+window/size/viewport_width=720
+window/size/viewport_height=1280
+window/stretch/mode="canvas_items"
+window/stretch/aspect="expand"
+window/handheld/orientation=1
+
+[input_devices]
+
+pointing/emulate_touch_from_mouse=true
+
+[rendering]
+
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"
+environment/defaults/default_clear_color=Color(0.0705882, 0.0392157, 0.164706, 1)
