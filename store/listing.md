@@ -38,15 +38,17 @@ Fill rows and columns with glass shards. Every line you clear charges the Core. 
 
 Easy to learn. Nasty near the top of the board.
 
-FEATURES
+MODES
 • Classic: one endless run, one best score to beat.
+• Void Rush: 90 seconds on the clock. Every line buys 1.5 more, every Prism buys 4. How long can you keep it alive?
+• Daily Shard: one seeded run a day, the same deal for everyone. Finish it to keep your streak.
+
+FEATURES
 • Core charges and Prism Resonance: one good clear sets up the next.
 • Combo chains: keep clearing and every cascade pays more.
 • One-thumb play: drag a piece, let go, it drops.
 • Offline. No accounts, no ads, no in-app purchases.
 • Haptics and sound can be switched off in the menu.
-
-Void Rush and Daily Shard are in development.
 
 Made by AT8 Studios.
 ```
@@ -61,6 +63,7 @@ Made by AT8 Studios.
 | Phone 2 | `store/phone-02-results.png` | 720x1280 |
 | Phone 3 | `store/phone-03-board.png` | 720x1280 |
 | Phone 4 | `store/phone-04-prism.png` | 720x1280 |
+| Phone 5 | `store/phone-05-rush.png` | 720x1280, Void Rush clock |
 
 720x1280 is inside Play's 320–3840 px range and exactly 9:16. Native 1080x1920
 captures are a job for the art pass; device screen grabs are 1:2 and would be
@@ -83,7 +86,7 @@ rejected, so do not upload them as phone screenshots.
 
 ## Release checklist
 
-1. `.\tools\version.ps1 -Version 0.2.0` (keeps both presets in sync).
+1. `.\tools\version.ps1 -Version 0.3.0` (keeps both presets in sync).
 2. `.\tools\test.ps1` — core + flow suites green.
 3. `.\tools\build.ps1 -Bundle` — produces `build\shardwave-release.aab`.
 4. Upload the AAB to **Internal testing** first; Play App Signing enrols the

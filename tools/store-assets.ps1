@@ -26,6 +26,7 @@ $targets = @(
     (Join-Path $proj 'store\phone-02-results.png'),
     (Join-Path $proj 'store\phone-03-board.png'),
     (Join-Path $proj 'store\phone-04-prism.png'),
+    (Join-Path $proj 'store\phone-05-rush.png'),
     (Join-Path $proj 'icons\store_icon_512.png')
 )
 foreach ($path in $targets) {

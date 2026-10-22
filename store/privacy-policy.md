@@ -9,7 +9,8 @@ describes exactly what the app does with your information.
 
 Shardwave saves your game progress and preferences on your own device:
 
-- best Classic score, total runs, lines cleared and Prisms cleared;
+- best score for each mode, total runs, lines cleared and Prisms cleared;
+- the date and score of your last Daily Shard, and your daily streak;
 - whether sound and haptics are on.
 
 This data is kept in the app's private storage. It is not transmitted

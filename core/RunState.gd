@@ -129,3 +129,11 @@ func _check_over() -> void:
 			return
 	over = true
 	game_over.emit()
+
+
+## Ends the run from outside the board rules (Void Rush running out of time).
+func timeout() -> void:
+	if over:
+		return
+	over = true
+	game_over.emit()

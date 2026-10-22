@@ -8,10 +8,21 @@ const DAILY_RECT := Rect2(130, 816, 460, 96)
 const HAPTICS_RECT := Rect2(130, 980, 220, 80)
 const SOUND_RECT := Rect2(370, 980, 220, 80)
 
+var _day_key := ""
+
 
 func _ready() -> void:
 	Session.last = {}
+	_day_key = ModeRules.date_key(ModeRules.today())
 	queue_redraw()
+
+
+func _process(_delta: float) -> void:
+	# unlock the daily at midnight without needing a restart
+	var key := ModeRules.date_key(ModeRules.today())
+	if key != _day_key:
+		_day_key = key
+		queue_redraw()
 
 
 func _draw() -> void:
@@ -35,8 +46,19 @@ func _draw() -> void:
 	Ui.label(self, Vector2(PLAY_RECT.position.x, PLAY_RECT.position.y + 76), "PLAY", 44, Ui.INK,
 		HORIZONTAL_ALIGNMENT_CENTER, PLAY_RECT.size.x)
 
-	_mode_row(VOID_RECT, "VOID RUSH")
-	_mode_row(DAILY_RECT, "DAILY SHARD")
+	var date := ModeRules.today()
+	var today_key := ModeRules.date_key(date)
+	var daily_done := Save.daily_played(today_key)
+
+	var rush_badge := "90 SECONDS"
+	if Save.best_rush > 0:
+		rush_badge = "BEST %s" % Ui.thousands(Save.best_rush)
+	_mode_row(VOID_RECT, "VOID RUSH", "BEAT THE CLOCK", rush_badge, true)
+
+	var daily_badge := "SHARD #%d" % ModeRules.shard_number(date)
+	if daily_done:
+		daily_badge = "PLAYED  %s" % Ui.thousands(Save.daily_score)
+	_mode_row(DAILY_RECT, "DAILY SHARD", "ONE RUN A DAY", daily_badge, not daily_done)
 
 	_toggle(HAPTICS_RECT, "HAPTICS", Save.haptics)
 	_toggle(SOUND_RECT, "SOUND", Save.sound)
@@ -45,11 +67,15 @@ func _draw() -> void:
 		"application/config/version", "dev"), 18, Ui.DIM, HORIZONTAL_ALIGNMENT_CENTER, 720)
 
 
-func _mode_row(rect: Rect2, name: String) -> void:
-	Ui.panel(self, rect, Color(Ui.PANEL, 0.55), Color(1, 1, 1, 0.05), 2.0)
-	Ui.label(self, Vector2(rect.position.x + 34, rect.position.y + 60), name, 30, Ui.DIM)
-	Ui.label(self, Vector2(rect.position.x, rect.position.y + 58), "SOON", 18,
-		Ui.DIM.darkened(0.15), HORIZONTAL_ALIGNMENT_RIGHT, rect.size.x - 34)
+func _mode_row(rect: Rect2, title: String, subtitle: String, badge: String, active: bool) -> void:
+	var border := Color(Ui.MINT, 0.55) if active else Color(1, 1, 1, 0.05)
+	Ui.panel(self, rect, Color(Ui.PANEL, 0.70 if active else 0.50), border, 2.0, active)
+	Ui.label(self, Vector2(rect.position.x + 34, rect.position.y + 44), title, 28,
+		Ui.TEXT if active else Ui.DIM)
+	Ui.label(self, Vector2(rect.position.x + 34, rect.position.y + 72), subtitle, 15,
+		Ui.DIM.darkened(0.15) if not active else Ui.DIM)
+	Ui.label(self, Vector2(rect.position.x, rect.position.y + 56), badge, 18,
+		Ui.MINT if active else Ui.DIM, HORIZONTAL_ALIGNMENT_RIGHT, rect.size.x - 34)
 
 
 func _toggle(rect: Rect2, name: String, on: bool) -> void:
@@ -74,8 +100,12 @@ func _diamond(c: Vector2, r: float) -> void:
 # ---------------------------------------------------------------- input
 
 func _notification(what: int) -> void:
-	if what == NOTIFICATION_WM_GO_BACK_REQUEST:
-		get_tree().quit()
+	match what:
+		NOTIFICATION_WM_GO_BACK_REQUEST:
+			get_tree().quit()
+		NOTIFICATION_APPLICATION_FOCUS_IN, NOTIFICATION_WM_WINDOW_FOCUS_IN:
+			_day_key = ModeRules.date_key(ModeRules.today())
+			queue_redraw()
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -94,6 +124,18 @@ func _tap(pos: Vector2) -> void:
 		Haptics.pulse(20, 0.6)
 		Session.begin("classic")
 		get_tree().change_scene_to_file("res://scenes/Game.tscn")
+	elif VOID_RECT.has_point(pos):
+		Audio.ui()
+		Haptics.pulse(20, 0.6)
+		Session.begin("rush")
+		get_tree().change_scene_to_file("res://scenes/Game.tscn")
+	elif DAILY_RECT.has_point(pos):
+		Audio.ui()
+		if Save.daily_played(ModeRules.date_key(ModeRules.today())):
+			return
+		Haptics.pulse(20, 0.6)
+		Session.begin("daily")
+		get_tree().change_scene_to_file("res://scenes/Game.tscn")
 	elif HAPTICS_RECT.has_point(pos):
 		Save.toggle_haptics()
 		Haptics.pulse(30, 0.7)
@@ -101,6 +143,3 @@ func _tap(pos: Vector2) -> void:
 	elif SOUND_RECT.has_point(pos):
 		Save.toggle_sound()
 		queue_redraw()
-	elif VOID_RECT.has_point(pos) or DAILY_RECT.has_point(pos):
-		# locked for now; the row already says SOON
-		Audio.ui()

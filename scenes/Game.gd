@@ -36,16 +36,32 @@ var paused := false
 var ending := false
 var popups: Array = []
 
+## Void Rush clock. Starts on the first placement, not on scene load.
+var rush_time := 0.0
+var rush_started := false
+var rush_elapsed := 0.0
+var time_up := false
+
 
 func _ready() -> void:
 	fx.bind(ORIGIN, CELL)
 	state.cleared.connect(_on_cleared)
 	state.game_over.connect(_on_game_over)
-	state.start(0)
+	state.start(Session.run_seed)
+	if Session.mode == "rush":
+		rush_time = ModeRules.RUSH_START
 	set_process(true)
 
 
 func _process(delta: float) -> void:
+	if Session.mode == "rush" and rush_started and not state.over and not paused:
+		rush_elapsed += delta
+		rush_time -= delta
+		if rush_time <= 0.0:
+			rush_time = 0.0
+			time_up = true
+			state.timeout()
+
 	shake = maxf(0.0, shake - delta * 42.0)
 	flash = maxf(0.0, flash - delta * 1.8)
 	shake_offset = Vector2.ZERO
@@ -136,9 +152,11 @@ func _release() -> void:
 	var origin := _ghost_origin(piece)
 
 	if state.board.can_place(piece.cells, origin):
-		state.place(drag_index, origin)
-		Audio.place()
-		Haptics.place()
+		if state.place(drag_index, origin) != null:
+			Audio.place()
+			Haptics.place()
+			if Session.mode == "rush":
+				rush_started = true
 
 	drag_index = -1
 	queue_redraw()
@@ -153,6 +171,9 @@ func _ghost_origin(piece: PieceLibrary.Piece) -> Vector2i:
 # ---------------------------------------------------------------- events
 
 func _on_cleared(result: ClearResult) -> void:
+	if Session.mode == "rush":
+		rush_time = minf(rush_time + ModeRules.rush_bonus(result), ModeRules.RUSH_MAX)
+
 	flash = 0.52 if result.prisms > 0 else 0.30
 	shake = 6.0 + 3.0 * minf(float(result.lines), 3.0) + 2.5 * float(result.chain_depth)
 	if result.prisms > 0:
@@ -181,7 +202,10 @@ func _on_game_over() -> void:
 	Haptics.multi(3)
 	ending = true
 	await get_tree().create_timer(0.9).timeout
-	Session.finish(state.score, state.lines_total, state.prisms_total, state.placements)
+	var extra := {}
+	if Session.mode == "rush":
+		extra["time"] = rush_elapsed
+	Session.finish(state.score, state.lines_total, state.prisms_total, state.placements, extra)
 	get_tree().change_scene_to_file("res://scenes/Results.tscn")
 
 
@@ -245,11 +269,34 @@ func _draw() -> void:
 	var font := ThemeDB.fallback_font
 	draw_string(font, Vector2(72, 118), "SCORE", HORIZONTAL_ALIGNMENT_LEFT, -1, 22, C_DIM)
 	draw_string(font, Vector2(72, 204), str(state.score), HORIZONTAL_ALIGNMENT_LEFT, -1, 76, C_TEXT)
-	draw_string(font, Vector2(500, 118), "COMBO", HORIZONTAL_ALIGNMENT_LEFT, -1, 22, C_DIM)
-	draw_string(font, Vector2(500, 186), "x%d" % maxi(state.combo, 1), HORIZONTAL_ALIGNMENT_LEFT, -1, 52,
-		C_MINT if state.combo > 1 else C_DIM)
-	draw_string(font, Vector2(500, 236), "BEST %s" % Ui.thousands(Save.best_classic),
-		HORIZONTAL_ALIGNMENT_LEFT, -1, 18, C_DIM)
+
+	if Session.mode == "rush":
+		var secs := ceili(rush_time)
+		var hot := rush_started and secs <= 10
+		var time_col := C_PINK if hot else C_TEXT
+		draw_string(font, Vector2(500, 118), "TIME", HORIZONTAL_ALIGNMENT_LEFT, -1, 22, C_DIM)
+		draw_string(font, Vector2(500, 186), "%d:%02d" % [secs / 60, secs % 60],
+			HORIZONTAL_ALIGNMENT_LEFT, -1, 52, time_col)
+		draw_string(font, Vector2(500, 236), "BEST %s" % Ui.thousands(Save.best_rush),
+			HORIZONTAL_ALIGNMENT_LEFT, -1, 18, C_DIM)
+		draw_string(font, Vector2(500, 274), "COMBO x%d" % maxi(state.combo, 1),
+			HORIZONTAL_ALIGNMENT_LEFT, -1, 18, C_MINT if state.combo > 1 else C_DIM)
+		var ratio := clampf(rush_time / ModeRules.RUSH_START, 0.0, 1.0)
+		draw_rect(Rect2(72, 276, 380, 5), Color(1, 1, 1, 0.08), true)
+		draw_rect(Rect2(72, 276, 380 * ratio, 5), time_col, true)
+	elif Session.mode == "daily":
+		draw_string(font, Vector2(500, 118), "SHARD #%d" % Session.daily_shard,
+			HORIZONTAL_ALIGNMENT_LEFT, -1, 20, C_MINT)
+		draw_string(font, Vector2(500, 186), "x%d" % maxi(state.combo, 1),
+			HORIZONTAL_ALIGNMENT_LEFT, -1, 52, C_MINT if state.combo > 1 else C_DIM)
+		draw_string(font, Vector2(500, 236), "BEST %s" % Ui.thousands(Save.best_daily),
+			HORIZONTAL_ALIGNMENT_LEFT, -1, 18, C_DIM)
+	else:
+		draw_string(font, Vector2(500, 118), "COMBO", HORIZONTAL_ALIGNMENT_LEFT, -1, 22, C_DIM)
+		draw_string(font, Vector2(500, 186), "x%d" % maxi(state.combo, 1),
+			HORIZONTAL_ALIGNMENT_LEFT, -1, 52, C_MINT if state.combo > 1 else C_DIM)
+		draw_string(font, Vector2(500, 236), "BEST %s" % Ui.thousands(Save.best_classic),
+			HORIZONTAL_ALIGNMENT_LEFT, -1, 18, C_DIM)
 
 	# core charge pips
 	for i in RunState.CHARGE_REQUIRED:
@@ -323,7 +370,8 @@ func _draw() -> void:
 	# game over — the results scene takes over after the wind-down
 	if state.over:
 		draw_rect(Rect2(Vector2.ZERO, Vector2(720, 1280)), Color(0.07, 0.04, 0.16, 0.82), true)
-		draw_string(font, Vector2(0, 560), "NO MOVES", HORIZONTAL_ALIGNMENT_CENTER, 720, 64, C_TEXT)
+		var headline := "TIME UP" if time_up else "NO MOVES"
+		draw_string(font, Vector2(0, 560), headline, HORIZONTAL_ALIGNMENT_CENTER, 720, 64, C_TEXT)
 		draw_string(font, Vector2(0, 640), "score  %s" % Ui.thousands(state.score),
 			HORIZONTAL_ALIGNMENT_CENTER, 720, 34, C_DIM)
 
@@ -338,6 +386,13 @@ func _draw_pause(font: Font) -> void:
 	draw_string(font, Vector2(0, 500), "PAUSED", HORIZONTAL_ALIGNMENT_CENTER, 720, 56, C_TEXT)
 	draw_string(font, Vector2(0, 556), "score  %s" % Ui.thousands(state.score),
 		HORIZONTAL_ALIGNMENT_CENTER, 720, 24, C_DIM)
+	if Session.mode == "rush":
+		var secs := ceili(rush_time)
+		draw_string(font, Vector2(0, 592), "time  %d:%02d" % [secs / 60, secs % 60],
+			HORIZONTAL_ALIGNMENT_CENTER, 720, 24, C_MINT)
+	elif Session.mode == "daily":
+		draw_string(font, Vector2(0, 592), "shard #%d" % Session.daily_shard,
+			HORIZONTAL_ALIGNMENT_CENTER, 720, 24, C_MINT)
 
 	Ui.panel(self, RESUME_RECT, C_MINT, C_MINT.darkened(0.30), 2.0, false)
 	Ui.label(self, Vector2(RESUME_RECT.position.x, RESUME_RECT.position.y + 70), "RESUME", 36,

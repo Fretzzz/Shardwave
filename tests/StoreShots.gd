@@ -85,6 +85,9 @@ func _prism_result() -> ClearResult:
 
 func _shoot() -> void:
 	Save.best_classic = 18420
+	Save.best_rush = 12480
+	Save.best_daily = 9210
+	Save.daily_date = ""
 
 	# 1) menu
 	var vp := _viewport()
@@ -112,6 +115,7 @@ func _shoot() -> void:
 	await _settle(3)
 
 	# 3) board mid-run
+	Session.begin("classic")
 	vp = _viewport()
 	var game: Node = load("res://scenes/Game.tscn").instantiate()
 	vp.add_child(game)
@@ -123,6 +127,7 @@ func _shoot() -> void:
 	await _settle(3)
 
 	# 4) prism cascade, captured a few frames into the blast
+	Session.begin("classic")
 	vp = _viewport()
 	game = load("res://scenes/Game.tscn").instantiate()
 	vp.add_child(game)
@@ -131,6 +136,21 @@ func _shoot() -> void:
 	game._on_cleared(_prism_result())
 	await _settle(9)
 	_save(vp, "phone-04-prism.png")
+	vp.queue_free()
+	await _settle(3)
+
+	# 5) Void Rush, clock running
+	Session.begin("rush")
+	vp = _viewport()
+	game = load("res://scenes/Game.tscn").instantiate()
+	vp.add_child(game)
+	await _settle()
+	_paint(game)
+	game.rush_started = true
+	game.rush_elapsed = 31.0
+	game.rush_time = 63.0
+	await _settle()
+	_save(vp, "phone-05-rush.png")
 	vp.queue_free()
 
 	get_tree().quit(0)

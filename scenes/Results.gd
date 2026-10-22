@@ -11,6 +11,7 @@ func _ready() -> void:
 
 func _draw() -> void:
 	var d := Session.last
+	var mode := str(d.get("mode", "classic"))
 	var score := int(d.get("score", 0))
 	var lines := int(d.get("lines", 0))
 	var prisms := int(d.get("prisms", 0))
@@ -18,10 +19,15 @@ func _draw() -> void:
 	var best := int(d.get("best", Save.best_classic))
 	var new_best := bool(d.get("new_best", false))
 
+	var title := "CLASSIC"
+	if mode == "rush":
+		title = "VOID RUSH"
+	elif mode == "daily":
+		title = "DAILY SHARD #%d" % int(d.get("shard", 0))
+
 	draw_rect(Rect2(0, 0, 720, 1280), Color(Ui.BG, 0.58), true)
 
-	Ui.label(self, Vector2(0, 240), str(d.get("mode", "classic")).to_upper(), 20, Ui.DIM,
-		HORIZONTAL_ALIGNMENT_CENTER, 720)
+	Ui.label(self, Vector2(0, 240), title, 20, Ui.DIM, HORIZONTAL_ALIGNMENT_CENTER, 720)
 
 	if new_best:
 		Ui.panel(self, Rect2(270, 300, 180, 44), Color(Ui.MINT, 0.12), Ui.MINT, 1.5, false)
@@ -37,15 +43,22 @@ func _draw() -> void:
 	# stat rows
 	var panel := Rect2(150, 566, 420, 220)
 	Ui.panel(self, panel, Color(Ui.PANEL, 0.75), Color(1, 1, 1, 0.06), 2.0)
-	_stat(panel, 0, "LINES", lines)
-	_stat(panel, 1, "PRISMS", prisms)
-	_stat(panel, 2, "PLACES", places)
+	_stat(panel, 0, "LINES", Ui.thousands(lines))
+	_stat(panel, 1, "PRISMS", Ui.thousands(prisms))
+	if mode == "rush":
+		_stat(panel, 2, "SURVIVED", _clock(int(d.get("time", 0))))
+	elif mode == "daily":
+		_stat(panel, 2, "STREAK", "%d %s" % [int(d.get("streak", 1)),
+			"day" if int(d.get("streak", 1)) == 1 else "days"])
+	else:
+		_stat(panel, 2, "PLACES", Ui.thousands(places))
 
 	Ui.label(self, Vector2(0, 838), "BEST  %s" % Ui.thousands(best), 22, Ui.DIM,
 		HORIZONTAL_ALIGNMENT_CENTER, 720)
 
+	var again_label := "PLAY CLASSIC" if mode == "daily" else "RUN AGAIN"
 	Ui.panel(self, AGAIN_RECT, Ui.MINT, Ui.MINT.darkened(0.30), 2.0, false)
-	Ui.label(self, Vector2(AGAIN_RECT.position.x, AGAIN_RECT.position.y + 76), "RUN AGAIN", 40,
+	Ui.label(self, Vector2(AGAIN_RECT.position.x, AGAIN_RECT.position.y + 76), again_label, 40,
 		Ui.INK, HORIZONTAL_ALIGNMENT_CENTER, AGAIN_RECT.size.x)
 
 	Ui.panel(self, MENU_RECT, Color(Ui.PANEL, 0.60), Color(1, 1, 1, 0.10), 2.0)
@@ -53,10 +66,14 @@ func _draw() -> void:
 		Ui.DIM, HORIZONTAL_ALIGNMENT_CENTER, MENU_RECT.size.x)
 
 
-func _stat(panel: Rect2, row: int, name: String, value: int) -> void:
+func _clock(total: int) -> String:
+	return "%d:%02d" % [total / 60, total % 60]
+
+
+func _stat(panel: Rect2, row: int, name: String, value: String) -> void:
 	var y := panel.position.y + 54 + row * 62
 	Ui.label(self, Vector2(panel.position.x + 40, y), name, 20, Ui.DIM)
-	Ui.label(self, Vector2(panel.position.x, y), Ui.thousands(value), 28, Ui.TEXT,
+	Ui.label(self, Vector2(panel.position.x, y), value, 28, Ui.TEXT,
 		HORIZONTAL_ALIGNMENT_RIGHT, panel.size.x - 40)
 
 
@@ -81,7 +98,8 @@ func _tap(pos: Vector2) -> void:
 	if AGAIN_RECT.has_point(pos):
 		Audio.ui()
 		Haptics.pulse(20, 0.6)
-		Session.begin("classic")
+		# a finished daily can't be replayed, so the button starts a Classic run
+		Session.begin("classic" if Session.mode == "daily" else Session.mode)
 		get_tree().change_scene_to_file("res://scenes/Game.tscn")
 	elif MENU_RECT.has_point(pos):
 		Audio.ui()

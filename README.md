@@ -8,9 +8,24 @@ cross-beam that cascades through everything it touches.
 **Studio:** AT8 Studios
 **Package:** `com.at8studios.shardwave`
 **Engine:** Godot 4.7 (GDScript, GL Compatibility)
-**Modes:** Classic · Void Rush* · Daily Shard*
+**Modes:** Classic · Void Rush · Daily Shard
 
-\* menu placeholders until their rules ship.
+## Modes
+
+- **Classic** — endless score attack. Best score is kept per mode.
+- **Void Rush** — 90 seconds on the clock, which starts on your first placement.
+  Every cleared line buys 1.5 s, every Prism detonation buys 4 s.
+- **Daily Shard** — one seeded run per local day. Everyone gets the same deal;
+  finishing locks the day until midnight and advances a consecutive-day streak.
+
+## Rules
+
+8×8 board, tray of three pieces, drag to place. Completing a row or column
+clears it. Clears charge the Core; at three charges the next tray refill deals
+a Prism as a fourth piece. A Prism is a wildcard, and clearing its row or
+column detonates a cross-beam that cascades through everything it touches.
+Combos multiply the payout; a clear with 6/8 matching blocks is "pure" and
+adds an extra charge.
 
 ## Toolchain
 
@@ -67,9 +82,11 @@ graphic; listing copy and the upload checklist live in `store/listing.md`.
 .\tools\test.ps1
 ```
 
-Runs the pure-core suite (`tests/CoreTests.gd`, 43 checks) and the scene-shell
-flow (`tests/FlowTest.tscn`, 18 checks): menu → game → results → pause →
-focus-loss → menu, plus save-schema checks.
+Runs the pure-core suite (`tests/CoreTests.gd`, 54 checks) and the scene-shell
+flow (`tests/FlowTest.tscn`, 34 checks): menu → game → results → pause →
+focus-loss → menu, Void Rush timeout, Daily Shard seed/lock, plus save-schema
+checks. Flow tests point `Save.save_path` at `user://test-save.cfg` so a real
+streak is never touched.
 Dev screenshot helpers: `tests/Shot.gd`, `tests/FxShot.gd`,
 `tests/ShotScene.tscn`, `tests/StoreShots.tscn`.
 
@@ -134,5 +151,7 @@ Rule: nothing outside `meta/Haptics.gd` calls `Input.vibrate_handheld()`.
 - **Shell** — Boot → Menu → Game → Results, persistence, pause, synthesized SFX.
 - **M2 (v0.2.0)** — Play-ready: AAB build path, focus-loss auto-pause, versioned
   save with migrations, adaptive + themed icons, store kit and privacy policy.
-- **Next** — Play internal testing → Void Rush + Daily Shard → missions, streaks,
-  share card → art/music pass.
+- **M3 (v0.3.0)** — Void Rush (90 s clock, +1.5 s/line, +4 s/Prism) and Daily
+  Shard (seeded by date, one run per day, streak, per-mode bests).
+- **Next** — Play internal testing → missions/streaks depth → share card →
+  art/music pass.

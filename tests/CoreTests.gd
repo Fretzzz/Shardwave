@@ -17,6 +17,8 @@ func _initialize() -> void:
 	_test_scoring()
 	_test_deterministic_deal()
 	_test_run_counters()
+	_test_mode_rules()
+	_test_timeout()
 
 	if failures.is_empty():
 		print("PASS  %d checks" % checks)
@@ -187,3 +189,36 @@ func _test_run_counters() -> void:
 	check(s.prisms_total == 0, "run: no prisms on a plain line")
 	check(s.score == r.score and s.score > 0, "run: score mirrored")
 	check(s.tray.size() == 3, "run: tray refilled, got %d" % s.tray.size())
+
+
+## Mode rules: time bonus and the daily seed/calendar are pure math.
+func _test_mode_rules() -> void:
+	var r := ClearResult.new()
+	r.lines = 2
+	r.prisms = 1
+	check(ModeRules.rush_bonus(r) == 7.0, "rules: 2 lines + 1 prism = 7s, got %s" % ModeRules.rush_bonus(r))
+
+	var plain := ClearResult.new()
+	plain.lines = 3
+	check(ModeRules.rush_bonus(plain) == 4.5, "rules: 3 plain lines = 4.5s")
+
+	var d := {"year": 2026, "month": 10, "day": 22}
+	check(ModeRules.daily_seed(d) == 20261022, "rules: daily seed, got %d" % ModeRules.daily_seed(d))
+	check(ModeRules.date_key(d) == "2026-10-22", "rules: date key, got %s" % ModeRules.date_key(d))
+	check(ModeRules.shard_number(d) == 1022, "rules: shard number, got %d" % ModeRules.shard_number(d))
+	check(ModeRules.previous_day_key("2026-10-22") == "2026-10-21", "rules: previous day")
+	check(ModeRules.previous_day_key("2026-03-01") == "2026-02-28", "rules: previous day across a month")
+	check(ModeRules.previous_day_key("2026-01-01") == "2025-12-31", "rules: previous day across a year")
+
+
+## Void Rush ends when its clock hits zero, and only once.
+func _test_timeout() -> void:
+	var s := RunState.new()
+	s.start(7)
+	var fired := [0]
+	s.game_over.connect(func(): fired[0] += 1)
+	s.timeout()
+	check(s.over, "timeout: run is over")
+	check(fired[0] == 1, "timeout: game_over emitted once, got %d" % fired[0])
+	s.timeout()
+	check(fired[0] == 1, "timeout: second call is a no-op")
