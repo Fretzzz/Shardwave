@@ -5,7 +5,10 @@ extends Node
 ## out by apply_settings() (called from Boot) rather than in _ready().
 
 const PATH := "user://save.cfg"
+## Bump when the shape of the file changes; _migrate() brings old files forward.
+const SCHEMA := 1
 
+var schema := SCHEMA
 var best_classic := 0
 var runs := 0
 var lines := 0
@@ -23,16 +26,30 @@ func load_game() -> void:
 	var cfg := ConfigFile.new()
 	if cfg.load(PATH) != OK:
 		return
+	schema = maxi(0, int(cfg.get_value("meta", "schema", 0)))
 	best_classic = cfg.get_value("scores", "best_classic", 0)
 	runs = cfg.get_value("scores", "runs", 0)
 	lines = cfg.get_value("scores", "lines", 0)
 	prisms = cfg.get_value("scores", "prisms", 0)
 	haptics = cfg.get_value("settings", "haptics", true)
 	sound = cfg.get_value("settings", "sound", true)
+	_migrate(schema)
+
+
+## Brings an older save forward. Every step must be idempotent, because a
+## crash mid-write leaves the file at the previous schema.
+func _migrate(from_schema: int) -> void:
+	if from_schema == SCHEMA:
+		return
+	if from_schema < 1:
+		pass # schema 0 had no [meta] section; the defaults above cover it
+	schema = SCHEMA
+	save_game()
 
 
 func save_game() -> void:
 	var cfg := ConfigFile.new()
+	cfg.set_value("meta", "schema", SCHEMA)
 	cfg.set_value("scores", "best_classic", best_classic)
 	cfg.set_value("scores", "runs", runs)
 	cfg.set_value("scores", "lines", lines)

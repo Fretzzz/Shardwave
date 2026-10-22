@@ -64,7 +64,21 @@ func _run() -> void:
 	check(game != null and game.scene_file_path.ends_with("Game.tscn"), "RUN AGAIN reopens Game")
 	check(game.state.score == 0 and not game.state.over, "new run is clean")
 
-	# 5) back pauses, quit returns to menu
+	# 5) the save file is versioned and on disk
+	var cfg := ConfigFile.new()
+	check(cfg.load(Save.PATH) == OK, "run wrote a save file")
+	check(int(cfg.get_value("meta", "schema", -1)) == Save.SCHEMA, "save carries the schema version")
+	check(Save.schema == Save.SCHEMA, "Save reports its schema")
+
+	# 6) focus loss auto-pauses exactly once, resume works
+	game._notification(NOTIFICATION_APPLICATION_FOCUS_OUT)
+	check(game.paused, "focus loss pauses")
+	game._notification(NOTIFICATION_APPLICATION_FOCUS_OUT)
+	check(game.paused, "focus loss does not toggle back")
+	game._press(Vector2(360, 675))
+	check(not game.paused, "resume clears the pause")
+
+	# 7) back pauses, quit returns to menu
 	game._notification(NOTIFICATION_WM_GO_BACK_REQUEST)
 	check(game.paused, "back button pauses")
 	game._press(Vector2(360, 808))
@@ -72,7 +86,7 @@ func _run() -> void:
 	menu = _scene()
 	check(menu != null and menu.scene_file_path.ends_with("Menu.tscn"), "QUIT TO MENU returns to menu")
 
-	# 6) back from results returns to menu
+	# 8) back from results returns to menu
 	get_tree().change_scene_to_file("res://scenes/Results.tscn")
 	await _settle()
 	results = _scene()

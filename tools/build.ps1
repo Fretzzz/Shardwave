@@ -2,11 +2,13 @@
 # Usage:
 #   .\tools\build.ps1            # debug APK
 #   .\tools\build.ps1 -Release   # release APK (needs export_credentials.cfg)
+#   .\tools\build.ps1 -Bundle    # release AAB for Play (needs Gradle template)
 #   .\tools\build.ps1 -Install   # build debug, then adb install
-#   .\tools\test.ps1             # core unit tests
+#   .\tools\test.ps1             # core + flow tests
 
 param(
     [switch]$Release,
+    [switch]$Bundle,
     [switch]$Install
 )
 
@@ -14,6 +16,8 @@ $ErrorActionPreference = 'Stop'
 
 $godot = 'C:\Tools\Godot\Godot_v4.7.2-stable_win64_console.exe'
 $adb = 'C:\Tools\android-sdk\platform-tools\adb.exe'
+$jdk = 'C:\Tools\jdk17'
+$sdk = 'C:\Tools\android-sdk'
 $proj = Split-Path -Parent $PSScriptRoot
 $buildDir = Join-Path $proj 'build'
 New-Item -ItemType Directory -Force $buildDir | Out-Null
@@ -49,6 +53,12 @@ keystore/release="$($values['keystore'])"
 keystore/release_user="$($values['keystore_user'])"
 keystore/release_password="$($values['keystore_password'])"
 
+[preset.1.options]
+
+keystore/release="$($values['keystore'])"
+keystore/release_user="$($values['keystore_user'])"
+keystore/release_password="$($values['keystore_password'])"
+
 "@
     $godotDir = Join-Path $proj '.godot'
     New-Item -ItemType Directory -Force $godotDir | Out-Null
@@ -58,7 +68,21 @@ keystore/release_password="$($values['keystore_password'])"
     Write-Host "credentials -> $target"
 }
 
-if ($Release) {
+if ($Bundle) {
+    Write-GodotCredentials
+    if (-not (Test-Path (Join-Path $proj 'android\build\build.gradle'))) {
+        throw "Gradle template missing; run .\tools\install-android-template.ps1"
+    }
+    # Gradle needs the JDK and SDK on the environment, and a portable cache.
+    $env:JAVA_HOME = $jdk
+    $env:ANDROID_HOME = $sdk
+    $env:ANDROID_SDK_ROOT = $sdk
+    if (-not $env:GRADLE_USER_HOME) { $env:GRADLE_USER_HOME = 'C:\Tools\gradle-home' }
+    $out = Join-Path $buildDir 'shardwave-release.aab'
+    Write-Host "exporting AAB -> $out"
+    Write-Host "gradle cache: $env:GRADLE_USER_HOME"
+    & $godot --headless --path $proj --export-release 'Android AAB' $out
+} elseif ($Release) {
     Write-GodotCredentials
     $out = Join-Path $buildDir 'shardwave-release.apk'
     Write-Host "exporting release -> $out"

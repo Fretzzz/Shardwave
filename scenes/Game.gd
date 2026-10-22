@@ -76,13 +76,29 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _notification(what: int) -> void:
-	if what == NOTIFICATION_WM_GO_BACK_REQUEST and not ending:
-		_toggle_pause()
+	match what:
+		NOTIFICATION_WM_GO_BACK_REQUEST:
+			if not ending:
+				_toggle_pause()
+		NOTIFICATION_APPLICATION_FOCUS_OUT, NOTIFICATION_APPLICATION_PAUSED, NOTIFICATION_WM_WINDOW_FOCUS_OUT:
+			# never lose a run to the notification shade or a phone call
+			_pause()
+
+
+func _pause() -> void:
+	if paused or ending:
+		return
+	paused = true
+	drag_index = -1
+	queue_redraw()
 
 
 func _toggle_pause() -> void:
-	paused = not paused
-	drag_index = -1
+	if paused:
+		paused = false
+		drag_index = -1
+	else:
+		_pause()
 	queue_redraw()
 
 

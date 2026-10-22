@@ -1,4 +1,5 @@
-# Bumps the app version in one place, keeping the APK version name and code in sync.
+# Bumps the app version in one place, keeping version/code and version/name in
+# sync across every Android preset (APK and AAB), plus config/version.
 # Usage:
 #   .\tools\version.ps1 -Version 0.2.0          # version code +1
 #   .\tools\version.ps1 -Version 0.2.0 -Code 7  # explicit version code

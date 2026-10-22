@@ -19,7 +19,8 @@ function New-BrandImage {
         [int]$Size,
         [double]$ContentScale,
         [bool]$WithBackground,
-        [bool]$Rounded
+        [bool]$Rounded,
+        [bool]$Monochrome = $false
     )
 
     $bmp = New-Object System.Drawing.Bitmap($Size, $Size)
@@ -64,6 +65,15 @@ function New-BrandImage {
         @(112, 392, $butter),
         @(398, 396, $sky)
     )
+    if ($Monochrome) {
+        $white = [System.Drawing.Color]::White
+        $beams = @(
+            @(120, 112, $white),
+            @(404, 130, $white),
+            @(112, 392, $white),
+            @(398, 396, $white)
+        )
+    }
     foreach ($b in $beams) {
         $pen = New-Object System.Drawing.Pen($b[2], 14.0)
         $pen.StartCap = [System.Drawing.Drawing2D.LineCap]::Round
@@ -80,18 +90,24 @@ function New-BrandImage {
         (New-Object System.Drawing.PointF(156, 256))
     )
     $shardRect = New-Object System.Drawing.RectangleF(156, 84, 200, 344)
-    $shardBrush = New-Object System.Drawing.Drawing2D.LinearGradientBrush(
-        $shardRect,
-        [System.Drawing.Color]::White,
-        [System.Drawing.ColorTranslator]::FromHtml('#CFC4FF'),
-        70.0)
+    if ($Monochrome) {
+        $shardBrush = New-Object System.Drawing.SolidBrush([System.Drawing.Color]::White)
+    } else {
+        $shardBrush = New-Object System.Drawing.Drawing2D.LinearGradientBrush(
+            $shardRect,
+            [System.Drawing.Color]::White,
+            [System.Drawing.ColorTranslator]::FromHtml('#CFC4FF'),
+            70.0)
+    }
     $g.FillPolygon($shardBrush, $points)
     $shardBrush.Dispose()
 
     # facet line
-    $facetPen = New-Object System.Drawing.Pen([System.Drawing.Color]::FromArgb(140, $facet), 6.0)
-    $g.DrawLine($facetPen, 256.0, 84.0, 256.0, 428.0)
-    $facetPen.Dispose()
+    if (-not $Monochrome) {
+        $facetPen = New-Object System.Drawing.Pen([System.Drawing.Color]::FromArgb(140, $facet), 6.0)
+        $g.DrawLine($facetPen, 256.0, 84.0, 256.0, 428.0)
+        $facetPen.Dispose()
+    }
 
     $g.Dispose()
     return $bmp
@@ -102,11 +118,15 @@ New-Item -ItemType Directory -Force $OutDir | Out-Null
 $jobs = @(
     @{ Name = 'icon_192.png'; Size = 192; Scale = 1.0; Bg = $true; Rounded = $true },
     @{ Name = 'adaptive_fg_432.png'; Size = 432; Scale = 0.62; Bg = $false; Rounded = $false },
-    @{ Name = 'adaptive_bg_432.png'; Size = 432; Scale = 1.0; Bg = $true; Rounded = $false }
+    @{ Name = 'adaptive_bg_432.png'; Size = 432; Scale = 1.0; Bg = $true; Rounded = $false },
+    # Android 13+ themed icon: a flat white silhouette the launcher tints
+    @{ Name = 'adaptive_mono_432.png'; Size = 432; Scale = 0.62; Bg = $false; Rounded = $false; Mono = $true },
+    # Play Store listing icon: full bleed, no rounded mask baked in
+    @{ Name = 'store_icon_512.png'; Size = 512; Scale = 1.0; Bg = $true; Rounded = $false }
 )
 
 foreach ($job in $jobs) {
-    $bmp = New-BrandImage -Size $job.Size -ContentScale $job.Scale -WithBackground $job.Bg -Rounded $job.Rounded
+    $bmp = New-BrandImage -Size $job.Size -ContentScale $job.Scale -WithBackground $job.Bg -Rounded $job.Rounded -Monochrome ([bool]$job.Mono)
     $out = Join-Path $OutDir $job.Name
     $bmp.Save($out, [System.Drawing.Imaging.ImageFormat]::Png)
     $bmp.Dispose()
