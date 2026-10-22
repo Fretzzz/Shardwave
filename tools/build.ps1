@@ -12,7 +12,7 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
-$godot = 'C:\Tools\Godot\Godot_v4.7.2-stable_win64.exe'
+$godot = 'C:\Tools\Godot\Godot_v4.7.2-stable_win64_console.exe'
 $adb = 'C:\Tools\android-sdk\platform-tools\adb.exe'
 $proj = Split-Path -Parent $PSScriptRoot
 $buildDir = Join-Path $proj 'build'

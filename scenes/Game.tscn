@@ -1,6 +1,11 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=5 format=3]
 
 [ext_resource type="Script" path="res://scenes/Game.gd" id="1_game"]
+[ext_resource type="Shader" path="res://shaders/aurora.gdshader" id="2_aurora"]
+[ext_resource type="Script" path="res://present/Fx.gd" id="3_fx"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_aurora"]
+shader = ExtResource("2_aurora")
 
 [node name="Game" type="Control"]
 layout_mode = 3
@@ -9,4 +14,27 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+mouse_filter = 2
 script = ExtResource("1_game")
+
+[node name="Aurora" type="ColorRect" parent="."]
+show_behind_parent = true
+material = SubResource("ShaderMaterial_aurora")
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.0705882, 0.0392157, 0.164706, 1)
+
+[node name="Fx" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("3_fx")

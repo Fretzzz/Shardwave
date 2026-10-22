@@ -7,6 +7,7 @@ var cells: Array[Vector2i] = []      ## every cell removed
 var lines: int = 0                   ## rows + cols completed by placement
 var pure_lines: int = 0              ## lines that were >= 6 same color
 var prisms: int = 0                  ## prisms detonated
+var prisms_at: Array[Vector2i] = []  ## board positions that detonated, in wave order
 var chain_depth: int = 0             ## prism-to-prism waves; 0 = no prism
 var cell_count: int = 0
 var score: int = 0

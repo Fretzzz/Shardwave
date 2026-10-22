@@ -7,8 +7,10 @@ cross-beam that cascades through everything it touches.
 
 **Studio:** AT8 Studios
 **Package:** `com.at8studios.shardwave`
-**Engine:** Godot 4.7 (GDScript, mobile renderer)
-**Modes:** Classic · Void Rush · Daily Shard
+**Engine:** Godot 4.7 (GDScript, GL Compatibility)
+**Modes:** Classic · Void Rush* · Daily Shard*
+
+\* menu placeholders until their rules ship.
 
 ## Toolchain
 
@@ -22,34 +24,66 @@ Everything is portable, nothing touches the registry:
 
 Godot editor settings must point at the JDK and SDK:
 `Editor > Editor Settings > Export > Android`.
+The Android preset also requires `import_etc2_astc=true` in `project.godot`
+(Android exports hard-fail without it).
 
 ## Build
 
 ```powershell
-# debug APK
-C:\Tools\Godot\Godot_v4.7.2-stable_win64.exe --headless --path C:\Projects\Shardwave `
-  --export-debug "Android" build/shardwave-debug.apk
+.\tools\build.ps1              # debug APK -> build\shardwave-debug.apk
+.\tools\build.ps1 -Install     # build, adb install -r, launch
+.\tools\build.ps1 -Release     # release APK (needs export_credentials.cfg)
 ```
 
-Install on a connected device:
+`tests/`, `tools/` and `build/` are stripped from the exported APK by
+`exclude_filter` in `export_presets.cfg`.
+
+## Test
 
 ```powershell
-C:\Tools\android-sdk\platform-tools\adb.exe install -r build\shardwave-debug.apk
+.\tools\test.ps1
 ```
+
+Runs the pure-core suite (`tests/CoreTests.gd`) and the scene-shell flow
+(`tests/FlowTest.tscn`): menu → game → results → pause → menu.
+Dev screenshot helpers: `tests/Shot.gd`, `tests/FxShot.gd`, `tests/ShotScene.tscn`.
 
 ## Signing
 
-The release keystore lives **outside** this repo (see `C:\Keys\shardwave-release.jks`)
-and is backed up separately. Losing it means never updating the app on Play.
+The release keystore lives **outside** this repo at
+`C:\Keys\shardwave-release.jks` (alias `shardwave`), with the password in
+`C:\Keys\shardwave-signing.txt` and `export_credentials.cfg` (gitignored).
+Both are backed up separately. Losing them means never updating the app on Play.
+
+Widgets: `icons/` holds the Android launcher/adaptive icons, regenerated with
+`.\tools\icons.ps1`.
+
+## Controls
+
+- Touch a tray piece and drag it onto the board; release to place.
+- Android back pauses the run (Resume / Quit to menu).
+- Menu toggles haptics and sound; both persist in `user://save.cfg`.
 
 ## Structure
 
 ```
 core/     pure logic, no nodes — unit tested
-present/  views, FX, camera, HUD
-meta/     save, audio, haptics, missions
+present/  FX director + shared UI tokens
+meta/     haptics, save, audio, session
 scenes/   boot, menu, game, results
-shaders/  aurora bg, glass blocks, beams
+shaders/  aurora background
+tests/    core + flow tests, dev screenshots (not shipped)
+tools/    build, test, icon scripts (not shipped)
 ```
 
 Rule: `core/` never imports a visual node. Visuals subscribe to signals.
+Rule: nothing outside `meta/Haptics.gd` calls `Input.vibrate_handheld()`.
+
+## Current state
+
+- **M0** — portable toolchain, signed debug APK, launch/render/haptics verified on device.
+- **M1** — playable Classic loop: 8×8 board, tray of 3, clears, Prism cascade,
+  Core charges, combo scoring, seeded deals.
+- **Shell** — Boot → Menu → Game → Results, persistence, pause, synthesized SFX.
+- **Next** — real art/feel pass on the Prism cascade, Void Rush + Daily Shard,
+  missions, store assets.

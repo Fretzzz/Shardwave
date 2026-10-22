@@ -4,7 +4,7 @@ build/
 android/
 *.translation
 
-# Secrets — never commit signing material
+# Secrets - never commit signing material
 *.keystore
 *.jks
 export_credentials.cfg

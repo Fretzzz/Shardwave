@@ -16,6 +16,7 @@ func _initialize() -> void:
 	_test_placement_rules()
 	_test_scoring()
 	_test_deterministic_deal()
+	_test_run_counters()
 
 	if failures.is_empty():
 		print("PASS  %d checks" % checks)
@@ -79,6 +80,7 @@ func _test_prism_cross() -> void:
 	var r := ClearResolver.resolve(b, 1)
 	check(r.lines == 1, "prism cross: 1 completed line")
 	check(r.prisms == 1, "prism cross: 1 prism, got %d" % r.prisms)
+	check(r.prisms_at == [Vector2i(6, 0)], "prism cross: detonation position, got %s" % str(r.prisms_at))
 	check(r.chain_depth == 1, "prism cross: depth 1, got %d" % r.chain_depth)
 	check(r.cell_count == 15, "prism cross: 15 cells, got %d" % r.cell_count)
 	check(b.filled_count() == 0, "prism cross: board emptied")
@@ -94,6 +96,8 @@ func _test_prism_chain() -> void:
 		b.place(dot(), Vector2i(x, 0), 1)
 	var r := ClearResolver.resolve(b, 1)
 	check(r.prisms == 2, "chain: 2 prisms, got %d" % r.prisms)
+	check(r.prisms_at.size() == 2 and r.prisms_at.has(Vector2i(0, 0)) and r.prisms_at.has(Vector2i(0, 5)),
+		"chain: both detonation positions, got %s" % str(r.prisms_at))
 	check(r.chain_depth == 2, "chain: depth 2, got %d" % r.chain_depth)
 	check(r.cell_count == 22, "chain: 22 cells, got %d" % r.cell_count)
 	check(r.waves.size() == 3, "chain: 3 waves, got %d" % r.waves.size())
@@ -156,3 +160,30 @@ func _test_deterministic_deal() -> void:
 			same = false
 	check(same, "deal: same seed gives same tray")
 	check(tray_a.size() == 3, "deal: 3 pieces")
+
+
+## RunState wiring: totals, score mirror, and tray refill after the last piece.
+func _test_run_counters() -> void:
+	var s := RunState.new()
+	s.start(7)
+	for x in 7:
+		s.board.place(dot(), Vector2i(x, 0), 2)
+
+	var piece := PieceLibrary.Piece.new()
+	piece.shape_name = "dot"
+	var cells: Array[Vector2i] = [Vector2i.ZERO]
+	piece.cells = cells
+	piece.weight = 3
+	var colors: Array[int] = [1]
+	var used: Array[bool] = [false]
+	s.tray = [piece]
+	s.colors = colors
+	s.used = used
+
+	var r := s.place(0, Vector2i(7, 0))
+	check(r != null and r.lines == 1, "run: single-line placement resolved")
+	check(s.lines_total == 1, "run: lines_total, got %d" % s.lines_total)
+	check(s.clears == 1, "run: clears, got %d" % s.clears)
+	check(s.prisms_total == 0, "run: no prisms on a plain line")
+	check(s.score == r.score and s.score > 0, "run: score mirrored")
+	check(s.tray.size() == 3, "run: tray refilled, got %d" % s.tray.size())

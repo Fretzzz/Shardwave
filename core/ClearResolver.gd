@@ -54,6 +54,7 @@ static func resolve(board: Board, combo: int = 1) -> ClearResult:
 				continue
 			detonated[prism] = true
 			result.prisms += 1
+			result.prisms_at.append(prism)
 
 			for x in Board.SIZE:
 				var p := Vector2i(x, prism.y)

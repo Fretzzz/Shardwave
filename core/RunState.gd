@@ -23,6 +23,11 @@ var charges := 0
 var placements := 0
 var over := false
 
+## Run totals for the results screen; reset with start().
+var lines_total := 0
+var prisms_total := 0
+var clears := 0
+
 
 func start(seed_value: int = 0) -> void:
 	if seed_value == 0:
@@ -34,6 +39,9 @@ func start(seed_value: int = 0) -> void:
 	combo = 0
 	charges = 0
 	placements = 0
+	lines_total = 0
+	prisms_total = 0
+	clears = 0
 	over = false
 	tray.clear()
 	colors.clear()
@@ -60,6 +68,9 @@ func place(index: int, origin: Vector2i) -> ClearResult:
 		combo += 1
 		charges += result.lines + result.pure_lines
 		score += result.score
+		lines_total += result.lines
+		prisms_total += result.prisms
+		clears += 1
 		cleared.emit(result)
 	else:
 		combo = 0
