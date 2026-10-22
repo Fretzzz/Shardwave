@@ -1,7 +1,7 @@
 # Shardwave — Agent Handoff
 
 **Updated:** 2026-10-23
-**Repo state:** local commit prepared, GitHub push pending authentication
+**Repo:** https://github.com/Fretzzz/Shardwave (private, branch `master`)
 **Engine:** Godot **4.7.2 stable**, GL Compatibility
 **Package:** `com.at8studios.shardwave`
 **Studio:** AT8 Studios
@@ -305,34 +305,35 @@ pause RESUME `(540,1012)`, QUIT `(540,1212)`, results MENU `(540,1074)`.
 
 ## 9. Git / GitHub status
 
-- Local git history exists; last commit before this handoff: `daa8278 v0.3.0`.
-- The v0.4.0 + Stage 0 + Stage 1 WIP changes are being committed together in this handoff.
-- No git remote configured at handoff time.
-- `gh` CLI **is not authenticated**:
-  ```
-  gh auth status  →  You are not logged into any GitHub hosts.
-  ```
-- To publish, authenticate then create a **private** repo (suggested name `Shardwave`):
-  ```powershell
-  gh auth login
-  gh repo create Shardwave --private --source . --remote origin --push
-  ```
-  Or create the repo in the web UI and:
-  ```powershell
-  git remote add origin https://github.com/<user>/Shardwave.git
-  git push -u origin master
-  ```
-- Verify the branch name (`master` vs `main`) before pushing.
+- **Published:** https://github.com/Fretzzz/Shardwave — private, default branch `master`.
+- Remote `origin` is configured; `master` tracks `origin/master`.
+- Handoff checkpoint: `5494532 v0.4.0 retention + visual overhaul checkpoint`.
+- History: `5494532` → `daa8278 v0.3.0` → `c968610 v0.2.0` → earlier M0/M1 commits.
+- `gh` is authenticated as **Fretzzz** with `repo` scope.
+- No signing material is tracked. Verified absent: `export_credentials.cfg`, `*.jks`,
+  `*.keystore`, `.godot/`, `build/`, signing notes.
+- 99 tracked files at the checkpoint.
+
+```powershell
+# Fresh clone
+git clone https://github.com/Fretzzz/Shardwave.git
+cd Shardwave
+
+# Continue work
+git pull --rebase
+git add -A
+git commit -m "<stage>: <what changed>"
+git push
+```
 
 ---
 
 ## 10. Immediate next steps
 
-1. `gh auth login`, create the private repo, push the handoff commit.
-2. Open the reference image and sanity-check the reconstructed palette/spacing.
-3. Finish Stage 1: `Ui.gd`, Backdrop, aurora shader, Boot, Menu, Save schema 4, Audio music,
+1. Open the reference image and sanity-check the reconstructed palette/spacing.
+2. Finish Stage 1: `Ui.gd`, Backdrop, aurora shader, Boot, Menu, Save schema 4, Audio music,
    settings overlay, tests.
-4. Run `--headless --import` and `tools/test.ps1`; fix regressions.
-5. Proceed to Stage 2 (crystal/board) only after the menu/branding pass is visually reviewed.
-6. Regenerate store assets at the end; do not upload to Play until support email and
+3. Run `--headless --import` and `tools/test.ps1`; fix regressions.
+4. Proceed to Stage 2 (crystal/board) only after the menu/branding pass is visually reviewed.
+5. Regenerate store assets at the end; do not upload to Play until support email and
    privacy-policy hosting URL are real (currently placeholders in `store/listing.md`).
