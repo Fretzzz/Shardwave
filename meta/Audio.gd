@@ -60,6 +60,14 @@ func ui() -> void:
 	play_sfx("ui")
 
 
+func tick() -> void:
+	play_sfx("tick")
+
+
+func time_up() -> void:
+	play_sfx("time_up")
+
+
 # --- synthesis ---
 
 func _build(kind: String) -> AudioStreamWAV:
@@ -70,6 +78,8 @@ func _build(kind: String) -> AudioStreamWAV:
 		"prism": return _synth(180.0, 1500.0, 0.45, 0.50, 0.07, 3)
 		"over": return _synth(300.0, 80.0, 0.55, 0.45, 0.02, 1)
 		"ui": return _synth(700.0, 880.0, 0.05, 0.28, 0.0, 1)
+		"tick": return _synth(1400.0, 1050.0, 0.05, 0.30, 0.0, 1)
+		"time_up": return _synth(620.0, 90.0, 0.70, 0.45, 0.03, 2)
 	return _synth(440.0, 440.0, 0.08, 0.30, 0.0, 1)
 
 

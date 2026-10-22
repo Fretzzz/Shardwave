@@ -89,6 +89,14 @@ func _shoot() -> void:
 	Save.best_daily = 9210
 	Save.daily_date = ""
 
+	# a six-day streak in the strip, with today still open
+	Save.daily_streak = 6
+	Save.daily_history.clear()
+	var key := ModeRules.date_key(ModeRules.today())
+	for i in 6:
+		key = ModeRules.previous_day_key(key)
+		Save.daily_history.push_front(key)
+
 	# 1) menu
 	var vp := _viewport()
 	vp.add_child(load("res://scenes/Menu.tscn").instantiate())

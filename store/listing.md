@@ -46,6 +46,8 @@ MODES
 FEATURES
 • Core charges and Prism Resonance: one good clear sets up the next.
 • Combo chains: keep clearing and every cascade pays more.
+• Stats at a glance: per-mode bests, lifetime lines and Prisms, daily streak.
+• Copy your score from the results screen and paste it anywhere.
 • One-thumb play: drag a piece, let go, it drops.
 • Offline. No accounts, no ads, no in-app purchases.
 • Haptics and sound can be switched off in the menu.
@@ -86,7 +88,7 @@ rejected, so do not upload them as phone screenshots.
 
 ## Release checklist
 
-1. `.\tools\version.ps1 -Version 0.3.0` (keeps both presets in sync).
+1. `.\tools\version.ps1 -Version 0.4.0` (keeps both presets in sync).
 2. `.\tools\test.ps1` — core + flow suites green.
 3. `.\tools\build.ps1 -Bundle` — produces `build\shardwave-release.aab`.
 4. Upload the AAB to **Internal testing** first; Play App Signing enrols the

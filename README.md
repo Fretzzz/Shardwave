@@ -83,10 +83,10 @@ graphic; listing copy and the upload checklist live in `store/listing.md`.
 ```
 
 Runs the pure-core suite (`tests/CoreTests.gd`, 54 checks) and the scene-shell
-flow (`tests/FlowTest.tscn`, 34 checks): menu → game → results → pause →
-focus-loss → menu, Void Rush timeout, Daily Shard seed/lock, plus save-schema
-checks. Flow tests point `Save.save_path` at `user://test-save.cfg` so a real
-streak is never touched.
+flow (`tests/FlowTest.tscn`, 39 checks): menu → game → results → pause →
+focus-loss → menu, Void Rush timeout, Daily Shard seed/lock/streak, stats
+overlay, copy feedback, plus save-schema checks. Flow tests point
+`Save.save_path` at `user://test-save.cfg` so a real streak is never touched.
 Dev screenshot helpers: `tests/Shot.gd`, `tests/FxShot.gd`,
 `tests/ShotScene.tscn`, `tests/StoreShots.tscn`.
 
@@ -153,5 +153,6 @@ Rule: nothing outside `meta/Haptics.gd` calls `Input.vibrate_handheld()`.
   save with migrations, adaptive + themed icons, store kit and privacy policy.
 - **M3 (v0.3.0)** — Void Rush (90 s clock, +1.5 s/line, +4 s/Prism) and Daily
   Shard (seeded by date, one run per day, streak, per-mode bests).
-- **Next** — Play internal testing → missions/streaks depth → share card →
-  art/music pass.
+- **M4 (v0.4.0)** — retention depth: seven-day streak strip, local stats panel,
+  "to go" target on results, copy-score.
+- **Next** — Play internal testing → art/music pass → 1.0.

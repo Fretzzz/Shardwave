@@ -3,10 +3,21 @@ extends Control
 
 const AGAIN_RECT := Rect2(130, 880, 460, 116)
 const MENU_RECT := Rect2(130, 1026, 460, 96)
+const COPY_RECT := Rect2(130, 1148, 460, 60)
+
+var copied := 0.0
 
 
 func _ready() -> void:
+	set_process(true)
 	queue_redraw()
+	Transition.play()
+
+
+func _process(delta: float) -> void:
+	if copied > 0.0:
+		copied = maxf(0.0, copied - delta)
+		queue_redraw()
 
 
 func _draw() -> void:
@@ -53,7 +64,11 @@ func _draw() -> void:
 	else:
 		_stat(panel, 2, "PLACES", Ui.thousands(places))
 
-	Ui.label(self, Vector2(0, 838), "BEST  %s" % Ui.thousands(best), 22, Ui.DIM,
+	var best_line := "BEST  %s" % Ui.thousands(best)
+	if not new_best and score < best:
+		best_line = "BEST  %s   ·   %s TO GO" % [Ui.thousands(best), Ui.thousands(best - score)]
+
+	Ui.label(self, Vector2(0, 838), best_line, 22, Ui.DIM,
 		HORIZONTAL_ALIGNMENT_CENTER, 720)
 
 	var again_label := "PLAY CLASSIC" if mode == "daily" else "RUN AGAIN"
@@ -65,9 +80,29 @@ func _draw() -> void:
 	Ui.label(self, Vector2(MENU_RECT.position.x, MENU_RECT.position.y + 62), "MENU", 32,
 		Ui.DIM, HORIZONTAL_ALIGNMENT_CENTER, MENU_RECT.size.x)
 
+	Ui.panel(self, COPY_RECT, Color(Ui.PANEL, 0.55), Color(1, 1, 1, 0.08), 2.0)
+	Ui.label(self, Vector2(COPY_RECT.position.x, COPY_RECT.position.y + 40),
+		"COPIED" if copied > 0.0 else "COPY SCORE", 20,
+		Ui.MINT if copied > 0.0 else Ui.DIM, HORIZONTAL_ALIGNMENT_CENTER, COPY_RECT.size.x)
+
 
 func _clock(total: int) -> String:
 	return "%d:%02d" % [total / 60, total % 60]
+
+
+func _share_text() -> String:
+	var d := Session.last
+	var mode := str(d.get("mode", "classic"))
+	var score := Ui.thousands(int(d.get("score", 0)))
+	var lines := int(d.get("lines", 0))
+	var prisms := int(d.get("prisms", 0))
+	if mode == "daily":
+		return "Shardwave Daily Shard #%d: %s points, %d lines, %d Prisms." % [
+			int(d.get("shard", 0)), score, lines, prisms]
+	if mode == "rush":
+		return "Shardwave Void Rush: %s points in %s, %d lines, %d Prisms." % [
+			score, _clock(int(d.get("time", 0))), lines, prisms]
+	return "Shardwave Classic: %s points, %d lines, %d Prisms." % [score, lines, prisms]
 
 
 func _stat(panel: Rect2, row: int, name: String, value: String) -> void:
@@ -104,3 +139,9 @@ func _tap(pos: Vector2) -> void:
 	elif MENU_RECT.has_point(pos):
 		Audio.ui()
 		get_tree().change_scene_to_file("res://scenes/Menu.tscn")
+	elif COPY_RECT.has_point(pos):
+		Audio.ui()
+		Haptics.pulse(15, 0.5)
+		DisplayServer.clipboard_set(_share_text())
+		copied = 1.6
+		queue_redraw()

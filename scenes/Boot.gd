@@ -17,6 +17,7 @@ func _ready() -> void:
 		"application/config/version", "dev")
 	Save.apply_settings()
 	set_process(true)
+	Transition.play()
 	await get_tree().create_timer(HOLD).timeout
 	get_tree().change_scene_to_file(MENU)
 

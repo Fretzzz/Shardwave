@@ -41,6 +41,7 @@ var rush_time := 0.0
 var rush_started := false
 var rush_elapsed := 0.0
 var time_up := false
+var _tick_sec := -1
 
 
 func _ready() -> void:
@@ -51,6 +52,7 @@ func _ready() -> void:
 	if Session.mode == "rush":
 		rush_time = ModeRules.RUSH_START
 	set_process(true)
+	Transition.play()
 
 
 func _process(delta: float) -> void:
@@ -61,6 +63,12 @@ func _process(delta: float) -> void:
 			rush_time = 0.0
 			time_up = true
 			state.timeout()
+		else:
+			var secs := ceili(rush_time)
+			if secs <= 10 and secs != _tick_sec:
+				_tick_sec = secs
+				Audio.tick()
+				Haptics.pulse(8, 0.35)
 
 	shake = maxf(0.0, shake - delta * 42.0)
 	flash = maxf(0.0, flash - delta * 1.8)
@@ -198,7 +206,10 @@ func _on_cleared(result: ClearResult) -> void:
 
 
 func _on_game_over() -> void:
-	Audio.over()
+	if time_up:
+		Audio.time_up()
+	else:
+		Audio.over()
 	Haptics.multi(3)
 	ending = true
 	await get_tree().create_timer(0.9).timeout

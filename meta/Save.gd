@@ -6,7 +6,7 @@ extends Node
 
 const PATH := "user://save.cfg"
 ## Bump when the shape of the file changes; _migrate() brings old files forward.
-const SCHEMA := 2
+const SCHEMA := 3
 
 var schema := SCHEMA
 var save_path := PATH
@@ -24,6 +24,8 @@ var daily_date := ""
 var daily_score := 0
 var daily_streak := 0
 var daily_last := ""
+## Completed daily date keys, oldest first, capped at 30 for the menu strip.
+var daily_history: Array[String] = []
 
 var haptics := true
 var sound := true
@@ -45,6 +47,7 @@ func load_game() -> void:
 	daily_score = 0
 	daily_streak = 0
 	daily_last = ""
+	daily_history.clear()
 	haptics = true
 	sound = true
 
@@ -62,6 +65,8 @@ func load_game() -> void:
 	daily_score = cfg.get_value("daily", "score", 0)
 	daily_streak = cfg.get_value("daily", "streak", 0)
 	daily_last = cfg.get_value("daily", "last", "")
+	for key in cfg.get_value("daily", "history", []):
+		daily_history.append(str(key))
 	haptics = cfg.get_value("settings", "haptics", true)
 	sound = cfg.get_value("settings", "sound", true)
 	_migrate(schema)
@@ -76,6 +81,8 @@ func _migrate(from_schema: int) -> void:
 		pass # schema 0 had no [meta] section; the defaults above cover it
 	if from_schema < 2:
 		pass # schema 2 added rush/daily scores; defaults are already correct
+	if from_schema < 3:
+		pass # schema 3 added the daily history strip; it starts empty
 	schema = SCHEMA
 	save_game()
 
@@ -93,6 +100,7 @@ func save_game() -> void:
 	cfg.set_value("daily", "score", daily_score)
 	cfg.set_value("daily", "streak", daily_streak)
 	cfg.set_value("daily", "last", daily_last)
+	cfg.set_value("daily", "history", daily_history)
 	cfg.set_value("settings", "haptics", haptics)
 	cfg.set_value("settings", "sound", sound)
 	cfg.save(save_path)
@@ -142,6 +150,10 @@ func record_daily(key: String, run_score: int) -> void:
 	daily_last = key
 	daily_date = key
 	daily_score = run_score
+	if not daily_history.has(key):
+		daily_history.append(key)
+		while daily_history.size() > 30:
+			daily_history.remove_at(0)
 	save_game()
 
 

@@ -103,6 +103,12 @@ func _run() -> void:
 	check(_scene().scene_file_path.ends_with("Menu.tscn"), "back from Results returns to menu")
 	menu = _scene()
 
+	# 8b) the BEST panel opens stats; any tap closes
+	menu._tap(Vector2(360, 412))
+	check(menu.stats_open, "BEST opens the stats overlay")
+	menu._tap(Vector2(360, 640))
+	check(not menu.stats_open, "tap closes the stats overlay")
+
 	# 9) Void Rush: a 90s clock, clears buy time, running out ends the run
 	menu._tap(Vector2(360, 748))
 	await _settle()
@@ -157,6 +163,12 @@ func _run() -> void:
 	check(Save.daily_played(today) and Save.daily_score == 0, "finishing the daily locks it")
 	check(int(Session.last.get("streak", 0)) == 5, "daily advances a consecutive-day streak, got %d" %
 		int(Session.last.get("streak", 0)))
+	check(Save.daily_history.has(today), "daily history records the day")
+
+	# the copy button gives feedback without leaving the screen
+	results._tap(Vector2(360, 1178))
+	check(results.copied > 0.0, "COPY SCORE gives feedback")
+	check(_scene() == results and Session.mode == "daily", "copying does not start a run")
 
 	# 11) a finished daily cannot be replayed from the menu
 	results._tap(Vector2(360, 1074))
